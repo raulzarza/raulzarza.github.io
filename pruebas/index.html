@@ -1,0 +1,147 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>RaZor</title>
+<meta charset="utf-8">
+<style type="text/css">
+body {
+  background-color: #000000;
+  margin: 0px;
+  overflow: hidden;
+}
+</style>
+</head>
+<body>
+  <script src="js/Three.js"></script>
+  <script>
+
+  // componentes principales de three.js
+  var camera, scene, renderer, sphere, plane,
+
+  // para seguir la posición del ratón
+    mouseX=0, mouseY=0,
+
+  // un vector/array en donde guardar nuestras partículas
+    particles=[];
+ 
+  /*
+  La función init() inicializa los tres objetos principales que necesitamos
+  para empezar a trabajar con three.js:
+      scene- la escena contiene todos los datos de los objetos 3D
+      camera- la cámara contiene la posicion, rotación y el campo de vista ( el ángulo de la lente )
+      renderer- cómo se verán los objetos desde el punto de vista de la cámara
+  */
+  // y allá vamos!
+  init();
+
+  function init(){
+    // Parámetros de la cámara:
+    // campo de vista, relacción de aspecto para la salida del render, frente y fondo del render de la escena
+    camera = new THREE.PerspectiveCamera(80, window.innerWidth/window.innerHeight, 1, 4000);
+    //camera = new THREE.Camera(80, window.innerWidth/window.innerHeight, 1, 4000);
+
+    // mueve la cámara hacia atrás para que podamos ver las cosas!
+    // la posición por defecto es 0,0,0.
+    camera.position.z = 1000;
+  
+    // la escena contiene todos los datos de los objetos 3D
+    scene = new THREE.Scene();
+
+    scene.add(camera);
+
+    // y el CanvasRenderer se da cuenta de cómo se ven las cosas en la escena y las pinta!
+    renderer = new THREE.CanvasRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    // el renderizador del canvas domElement es añadido al body
+    document.body.appendChild(renderer.domElement);
+
+    makeParticles();
+
+    // añadir el listener al movimiento del ratón
+    document.addEventListener('mousemove', onMouseMove, false);
+
+    // renderizar 30 veces por segundo 
+    setInterval(update, 1000/30);
+    
+    
+	sphere = new THREE.Mesh( new THREE.SphereGeometry( 250, 50, 50 ), new THREE.MeshLambertMaterial( { shading: THREE.FlatShading } ) );
+	scene.add( sphere );
+
+
+  }
+
+  // la función principal, llamda 30 veces en un segundo
+  function update(){
+    updateParticles();
+
+    // y renderizamos la escena desde la perspectiva de la camara
+    renderer.render(scene, camera);
+  }
+
+  // crea partículas en posiciones aleatorias
+
+  function makeParticles(){
+    var particle, material;
+
+    // vamos a mover desde la posición z -1000 ( muy lejos )
+    // a la posición 1000 ( donde está la cámara ) y añadir una partícula en cada posición.
+
+    for (var zpos=-1000; zpos<1000; zpos+=20){
+      // TRADUCIR MÁS TARDE
+      // TRADUCIR MÁS TARDE
+      material = new THREE.ParticleCanvasMaterial({color: 0xffffff, program: particleRender});
+      // crear la partícula
+      particle = new THREE.Particle(material);
+
+      // darle una posición aleatoria a "x" y a "y" entre -500 y 500
+      particle.position.x=Math.random()*1000-500;
+      particle.position.y=Math.random()*1000-500;
+
+      // darle una posición z
+      particle.position.z=zpos;
+
+      // escalalo un poco
+      particle.scale.x=particle.scale.y=10;
+
+      // ponlo en la escena
+      scene.add(particle);
+
+      // y en el vector/array de partículas.
+      particles.push(particle);
+
+    }
+  }
+  
+  function particleRender(context){
+    // le hemos pasado la referencia a un contexto canvas
+    context.beginPath();
+    // TRADUCIR MAS TARDE
+    // TRADUCIR MAS TARDE
+    context.arc(0,0,1,0, Math.PI*2, true);
+    context.fill();
+  }
+
+  function updateParticles(){
+    // iterar por cada partícula
+    for(var i=0; i<particles.length; i++){
+      particle=particles[i];
+
+      // y muevela hacia alante dependiendo de la posición Y del ratón
+      particle.position.z += mouseY*0.1;
+
+      // si la partícula está muy cerca, muevela al fondo
+      if(particle.position.z>1000) particle.position.z-=2000;
+      
+    }
+  }
+
+  function onMouseMove( event ) {
+    // actualiza la posición mouseX and mouseY 
+    mouseX = event.clientX;
+    mouseY = event.clientY;
+  }
+
+  </script>
+</body>
+</html>

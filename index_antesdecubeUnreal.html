@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<link rel="icon" type="image/vnd.microsoft.icon" href="textures/favicon.ico"/>
+		<title>Witty Planet</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background:#000;
+				color: #eee;
+				padding:0;
+				margin:0;
+				font-weight:bold;
+				overflow:hidden;
+
+				font-family:Monospace;
+				font-size:13px;
+				text-align:center;
+			}
+
+			#info {
+				position: absolute;
+				top: 0px; width: 100%;
+				padding: 5px;
+				z-index:100;
+			}
+
+			a {
+
+				color: #0080ff;
+			}
+
+			b { color:orange }
+		</style>
+
+		<script src="js/three.min.js"></script>
+		<script src="js/ColladaLoader.js"></script>
+		<script src="js/FlyControls.js"></script>
+
+		<script src="js/Detector.js"></script>
+		<!-- <script src="js/detectmobilebrowser.js"></script> -->
+		
+		<script type="text/javascript">
+			// Obtenemos la URL
+			var url = document.location.href;
+			// Nos quedamos con los parÃ¡metros
+			url = url.substring(url.lastIndexOf('?')+1);
+			// Dividimos los distintos parÃ¡metros
+			url = url.split('&');
+			// Almacenamos los parÃ¡metros en un array(param => valor)
+			var res = new Array();
+			for(var i=0; i<url.length; i++) {
+				var aux = url[i].split('=');
+				res[aux[0]] = aux[1];
+			}
+			
+			//Obtenemos la Query String (URL - host)
+			var url = document.location.href;
+			url = url.substring(url.lastIndexOf(document.location.host)+1);
+			// Separamos mediante la barra (/)
+			var res = url.split('/');
+			//console.log("Cadena: %s",res);
+		</script>
+		
+	</head>
+
+
+	<body>
+
+		<!-- CABECERA -->
+		<div>
+			<table style="width:100%">
+			  <tr>
+			    <td style="width:33%" align="center"> <audio id="audio_theme" src="Sounds/Basket_Case.mp3" preload="auto" ></audio> </td>
+			    <!-- <td style="width:33%"> <b>WASD</b> move, <b>R|F</b> up | down, <b>up|down</b> pitch, <b>left|right</b> yaw<br/> </td>  -->
+			    <td style="width:33%" align="center"> 
+			    	<a href="http://www.wittyplanet.com/WittyMoleWEB/index.html" target="_blank">
+			    		<marquee bgcolor="#000000" width="50%" scrolldelay="100" scrollamount="5" direction="left" loop="infinite" behavior="alternate" >
+			    			<h3>Try WittyMoleWEB Beta</h3>
+			    		</marquee>
+			    	</a> 
+			    </td>
+			  </tr>
+			</table>	
+		</div>
+
+
+		<script>
+
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+			var radius = 6371;
+			var tilt = 0.41;
+			var rotationSpeed = 0.20;
+
+			var cloudsScale = 1.005;
+
+			var MARGIN = 0;
+			var SCREEN_HEIGHT = window.innerHeight - MARGIN * 2;
+			var SCREEN_WIDTH  = window.innerWidth;
+
+			var container, stats;
+			var camera, controls, scene, renderer;
+			var geometry, meshPlanet, meshClouds, Earth_poly, meshPlanet2, meshClouds2, logo, logo2, meshQrcode, meshPlayStore, 
+				meshWittyMole, meshSoonStores, cubeBox, cubeSoonBox, cubeQRMole;
+				
+			var dirLight, dirLight2, dirLight3, dirLight4, dirLight5, pointLight, ambientLight;
+			var sounds = [];
+			var objects = [];
+			
+			var clock = new THREE.Clock();
+			
+			var mouse = new THREE.Vector2();
+
+			var raycaster = new THREE.Raycaster();
+
+			var projector = new THREE.Projector();
+			
+			
+/*********************************************************************************************************************/
+/*********************************************************************************************************************/
+
+			init();
+			animate();
+
+			function init() {
+
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+
+				camera = new THREE.PerspectiveCamera( 50, SCREEN_WIDTH / SCREEN_HEIGHT, 50, 1e7 );
+				camera.position.z = radius * 5;
+
+				scene = new THREE.Scene();
+				scene.fog = new THREE.FogExp2( 0x000000, 0.00000025 );
+
+				controls = new THREE.FlyControls( camera );
+
+				logo = new THREE.Object3D();//create an empty container
+				
+				logo2 = new THREE.Object3D();
+				
+				controls.movementSpeed = 1000;
+				controls.domElement = container;
+				controls.rollSpeed = Math.PI / 24;
+				controls.autoForward = false;
+				controls.dragToLook = true;
+
+				dirLight = new THREE.DirectionalLight( 0xffffff );
+				dirLight.position.set( 1, 1, 1 ).normalize();//( 1, 1, 0.5 )
+				scene.add( dirLight );
+				
+				dirLight2 = new THREE.DirectionalLight( 0xffffff );
+				dirLight2.position.set( -1, -1, 1 ).normalize();//( -1, -1, 0.5 )
+				scene.add( dirLight2 );
+				
+				dirLight3 = new THREE.DirectionalLight( 0xffffff );
+				dirLight3.position.set( -1, 1, 1 ).normalize();
+				//scene.add( dirLight3 );
+				
+				dirLight4 = new THREE.DirectionalLight( 0xffffff );
+				dirLight4.position.set( 1, -1, 1 ).normalize();
+				//scene.add( dirLight4 );
+				
+				dirLight5 = new THREE.DirectionalLight( 0xffffff );
+				dirLight5.position.set( 0, 1, -50 ).normalize();
+				//scene.add( dirLight5 );
+
+				ambientLight = new THREE.AmbientLight( 0x000000 );
+				scene.add( ambientLight );
+
+				var planetTexture   = THREE.ImageUtils.loadTexture( "textures/texturePlanet.jpg" );
+				var cloudsTexture   = THREE.ImageUtils.loadTexture( "textures/textureClouds.png" );
+				var playStoreTexture   = THREE.ImageUtils.loadTexture( "textures/googleplayicon.png" );
+				var comingSoonStoresTexture   = THREE.ImageUtils.loadTexture( "textures/comingsoon.png" );
+				var qrComingTexture   = THREE.ImageUtils.loadTexture( "textures/questionMark.png" );
+
+
+				// planet
+	
+				geometry = new THREE.SphereGeometry( radius, 100, 50 );
+				geometry.computeTangents();
+
+				var materialPlanet = new THREE.MeshLambertMaterial( { color: 0xffffff, map: planetTexture } );
+
+				meshPlanet = new THREE.Mesh( geometry, materialPlanet );
+				meshPlanet.position.set(0,1000,0);
+				meshPlanet.rotation.y = 0;
+				meshPlanet.rotation.z = tilt;
+				//logo.add( meshPlanet );
+
+
+				// clouds
+
+				var materialClouds = new THREE.MeshLambertMaterial( { color: 0xffffff, map: cloudsTexture, transparent: true } );
+
+				meshClouds = new THREE.Mesh( geometry, materialClouds );
+				meshClouds.scale.set( cloudsScale, cloudsScale, cloudsScale );
+				meshClouds.position.set(0,1000,0);
+				meshClouds.rotation.z = tilt;
+				//logo.add( meshClouds );
+
+
+				// stars
+
+				var i, r = radius, starsGeometry = [ new THREE.Geometry(), new THREE.Geometry() ];
+
+				for ( i = 0; i < 250; i ++ ) {
+
+					var vertex = new THREE.Vector3();
+					vertex.x = Math.random() * 2 - 1;
+					vertex.y = Math.random() * 2 - 1;
+					vertex.z = Math.random() * 2 - 1;
+					vertex.multiplyScalar( r );
+
+					starsGeometry[ 0 ].vertices.push( vertex );
+
+				}
+
+				for ( i = 0; i < 1500; i ++ ) {
+
+					var vertex = new THREE.Vector3();
+					vertex.x = Math.random() * 2 - 1;
+					vertex.y = Math.random() * 2 - 1;
+					vertex.z = Math.random() * 2 - 1;
+					vertex.multiplyScalar( r );
+
+					starsGeometry[ 1 ].vertices.push( vertex );
+
+				}
+
+				var stars;
+				var starsMaterials = [
+					new THREE.PointCloudMaterial( { color: 0x555555, size: 2, sizeAttenuation: false } ),
+					new THREE.PointCloudMaterial( { color: 0x555555, size: 1, sizeAttenuation: false } ),
+					new THREE.PointCloudMaterial( { color: 0x333333, size: 2, sizeAttenuation: false } ),
+					new THREE.PointCloudMaterial( { color: 0x3a3a3a, size: 1, sizeAttenuation: false } ),
+					new THREE.PointCloudMaterial( { color: 0x1a1a1a, size: 2, sizeAttenuation: false } ),
+					new THREE.PointCloudMaterial( { color: 0x1a1a1a, size: 1, sizeAttenuation: false } )
+				];
+
+				for ( i = 10; i < 30; i ++ ) {
+
+					stars = new THREE.PointCloud( starsGeometry[ i % 2 ], starsMaterials[ i % 6 ] );
+
+					stars.rotation.x = Math.random() * 6;
+					stars.rotation.y = Math.random() * 6;
+					stars.rotation.z = Math.random() * 6;
+
+					s = i * 10;
+					stars.scale.set( s, s, s );
+
+					stars.matrixAutoUpdate = false;
+					stars.updateMatrix();
+
+					scene.add( stars );
+
+				}
+				
+				//Texto Witty Importado Blender
+				
+			  	var loader = new THREE.ColladaLoader();
+			
+			  	loader.options.convertUpAxis = true;
+			 
+			  	loader.load( 'obj/textWitty.dae', function ( collada ) {
+			   
+				    var Witty = collada.scene;
+				    var skin = collada.skins[ 0 ];
+				  
+					Witty.position.set(0,10000,0);// set(0,1000,0)
+					Witty.rotation.x =  90 * Math.PI / 180;
+					Witty.scale.set(5000,5000,5000);
+				
+					logo.add(Witty);
+			    });
+    
+    
+			    //Texto Planet Importado Blender
+			    
+			  	var loader = new THREE.ColladaLoader();
+			
+			  	loader.options.convertUpAxis = true;
+			  	
+			     loader.load( 'obj/textPlanet.dae', function ( collada ) {
+			   
+				    var Planet = collada.scene;
+				    var skin = collada.skins[ 0 ];
+				  
+					Planet.position.set(0,-10000,0);// set(0,1000,0)
+					Planet.rotation.x = 90 * Math.PI / 180;
+					Planet.scale.set(5000,5000,5000);//3500
+				
+					logo.add(Planet);
+			    });
+    
+    
+				scene.add( logo );
+				
+				
+			    //Texto Coming Soon... Importado Blender
+			    
+			  	var loader = new THREE.ColladaLoader();
+			
+			  	loader.options.convertUpAxis = true;
+			 
+			  	loader.load( 'obj/textComingSoon.dae', function ( collada ) {
+			   
+				    var ComingSoon = collada.scene;
+				    var skin = collada.skins[ 0 ];
+				  
+					ComingSoon.position.set(-20000,-10000,0);// -12000
+					ComingSoon.rotation.x =  90 * Math.PI / 180;
+					ComingSoon.scale.set(2000,2000,2000);
+				
+					//scene.add(ComingSoon);
+			    });
+
+
+				//Play Store
+
+				var geometry3 = new THREE.CubeGeometry( 7500, 50, 3000 );
+				geometry3.computeTangents();
+
+				var materialPlayStore = new THREE.MeshLambertMaterial( { color: 0xffffff, map: playStoreTexture, transparent: true   } );
+
+				meshPlayStore = new THREE.Mesh( geometry3, materialPlayStore );
+				meshPlayStore.position.set(20000,-2000,0);// -12000
+				//meshQrcode.scale.set(5000,5000,5000);
+				meshPlayStore.rotation.x =  90 * Math.PI / 180;
+				
+				scene.add(meshPlayStore);	
+				
+			    
+			    
+			    //Cubo con texturas por caras
+	  
+				 var imagePrefix = "textures/cubeQR_Mole/";
+				 var directions  = ["qrcode", "qrcode", "qrcode", "qrcode", "Icono", "Icono"];
+				 var imageSuffix = ".png";
+				   
+				 var materialArray = [];
+				 for (var i = 0; i < 6; i++)
+				  materialArray.push( new THREE.MeshBasicMaterial({
+				   map: THREE.ImageUtils.loadTexture( imagePrefix + directions[i] + imageSuffix ),
+				   side: THREE.FrontSide
+				  }));
+				  
+				 var cubeGeometry = new THREE.CubeGeometry( 5000, 5000, 5000 );
+				 var cubeMaterial = new THREE.MeshFaceMaterial( materialArray );
+				 cubeQRMole = new THREE.Mesh( cubeGeometry, cubeMaterial );
+				 cubeQRMole.position.set(20000,-6800,0);
+				 
+				 scene.add( cubeQRMole );
+			    
+			    
+			    	
+				
+				//Cubo qrCode ???
+				  
+				 var cubeGeometry = new THREE.CubeGeometry( 5000, 5000, 5000 );
+				 var cubeMaterial = new THREE.MeshLambertMaterial( { color: 0xffffff, map: qrComingTexture, transparent: true  } );
+				 cubeBox = new THREE.Mesh( cubeGeometry, cubeMaterial );
+				 cubeBox.position.set(-20000,-6800,0);
+				 
+				 scene.add( cubeBox );
+				
+				
+				
+				//Cubo con texturas por caras
+	  
+				 var imagePrefix = "textures/cubeComingSoonStores/";
+				 var directions  = ["comingSoonA", "comingSoonB", "comingSoonB", "comingSoonB", "comingSoonB", "comingSoonA"];
+				 var imageSuffix = ".png";
+				   
+				 var materialArray = [];
+				 for (var i = 0; i < 6; i++)
+				  materialArray.push( new THREE.MeshBasicMaterial({
+				   map: THREE.ImageUtils.loadTexture( imagePrefix + directions[i] + imageSuffix ),
+				   side: THREE.BackSide
+				  }));
+				  
+				 var cubeGeometry = new THREE.CubeGeometry( 7500, 3000, 50 );
+				 var cubeMaterial = new THREE.MeshFaceMaterial( materialArray );
+				 cubeSoonBox = new THREE.Mesh( cubeGeometry, cubeMaterial );
+				 cubeSoonBox.position.set(-20000,-2000,0);
+				 
+				 scene.add( cubeSoonBox );
+				
+				
+				
+				
+				
+				
+			    //Earth poly... Importado Blender
+			    
+			  	var loader = new THREE.ColladaLoader();
+			
+			  	loader.options.convertUpAxis = true;
+			 
+			  	loader.load( 'obj/earth_poly_center.dae', function ( collada ) {
+			   
+				    Earth_poly = collada.scene;
+				    var skin = collada.skins[ 0 ];
+				  	
+				  	Earth_poly.position.set(0,1500,0);
+					Earth_poly.rotation.z =  120 * Math.PI / 180;
+					Earth_poly.rotation.y = 180 * Math.PI / 180;
+					Earth_poly.scale.set(20,20,20);
+					Earth_poly.name = "earth_poly";
+					
+					scene.add( Earth_poly );
+			    });
+			    
+
+	
+				// lines
+				
+				for (var i = 0; i < 300; i++) {
+			
+					var geometry = new THREE.Geometry();
+			
+					var vertex = new THREE.Vector3( Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1 );
+					vertex.normalize();
+					vertex.multiplyScalar( radius*2 );
+			
+					geometry.vertices.push( vertex );
+			
+					var vertex2 = vertex.clone();
+					vertex2.multiplyScalar( Math.random() * 0.3 + 1 );
+			
+					geometry.vertices.push( vertex2 );
+			
+					line = new THREE.Line( geometry, new THREE.LineBasicMaterial( { color: 0xffffff, opacity: Math.random() } ) );
+					//scene.add(line);
+				}	
+    
+				
+
+				
+				//SKYBOXXXXX
+	  
+				 var imagePrefix = "textures/skybox/";
+				 var directions  = ["Left", "Right", "Up", "Down", "Front", "Back"];
+				 var imageSuffix = ".png";
+				   
+				 var materialArray = [];
+				 for (var i = 0; i < 6; i++)
+				  materialArray.push( new THREE.MeshBasicMaterial({
+				   map: THREE.ImageUtils.loadTexture( imagePrefix + directions[i] + imageSuffix ),
+				   side: THREE.BackSide
+				  }));
+				  
+				 var skyGeometry = new THREE.CubeGeometry( 100000, 100000, 100000 );
+				 var skyMaterial = new THREE.MeshFaceMaterial( materialArray );
+				 var skyBox = new THREE.Mesh( skyGeometry, skyMaterial );
+				 skyBox.rotation.x = 180 * Math.PI / 2;
+				 skyBox.rotation.y = 90 * Math.PI / 2;
+				 
+				 scene.add( skyBox );
+				
+				// sound
+				
+				sounds["theme"] = document.getElementById("audio_theme");
+				sounds["theme"].loop = true;
+				sounds["theme"].volume = 0.05;
+				//sounds["theme"].controls = true;
+				//sounds["theme"].play();
+				
+    
+				renderer = new THREE.WebGLRenderer();
+				renderer.setSize( SCREEN_WIDTH, SCREEN_HEIGHT );
+				renderer.sortObjects = false;
+
+				renderer.autoClear = false;
+
+				container.appendChild( renderer.domElement );
+				
+				document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+	};
+
+			function onWindowResize( event ) {
+
+				SCREEN_HEIGHT = window.innerHeight;
+				SCREEN_WIDTH  = window.innerWidth;
+
+				renderer.setSize( SCREEN_WIDTH, SCREEN_HEIGHT );
+
+				camera.aspect = SCREEN_WIDTH / SCREEN_HEIGHT;
+				camera.updateProjectionMatrix();
+
+			};
+
+			function onDocumentMouseDown( event ) {
+
+				event.preventDefault();
+
+				var vector = new THREE.Vector3( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1, 0.5 );
+				
+				projector.unprojectVector( vector, camera );
+
+				var raycaster = new THREE.Raycaster( camera.position, vector.sub( camera.position ).normalize() );
+
+				var intersects = raycaster.intersectObjects( objects );
+
+				if ( intersects.length > 0 ) {
+					console.log("Objeto tocado: ", intersects[ 0 ].object.name, SCREEN_HEIGHT, SCREEN_WIDTH );
+					
+				}
+			};
+
+			//animate
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				render();
+
+			};
+
+
+			function render() {
+
+				// rotate the planet and clouds
+
+				var delta = clock.getDelta();
+
+
+				meshPlanet.rotation.y += rotationSpeed * delta;
+				meshClouds.rotation.y += 1.25 * rotationSpeed * delta;
+
+				Earth_poly.rotation.y += rotationSpeed * delta;
+
+				//meshQrcode.rotation.y += rotationSpeed * delta;
+				meshPlayStore.rotation.x += 5 * rotationSpeed * delta;
+				
+				//meshWittyMole.rotation.x += 5 * rotationSpeed * delta;
+				cubeBox.rotation.y -= rotationSpeed * delta;
+				
+				cubeQRMole.rotation.y += rotationSpeed * delta;
+				
+				cubeSoonBox.rotation.x += 5 * rotationSpeed * delta;
+
+				controls.update( delta );
+				renderer.render(scene, camera);
+
+			};
+
+		</script>
+	</body>
+</html>
