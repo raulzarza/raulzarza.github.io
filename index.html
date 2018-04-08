@@ -6,32 +6,34 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<style>
-			body {
-				background:#000;
+			body 
+			{
+				background: #000;
 				color: #eee;
-				padding:0;
-				margin:0;
-				font-weight:bold;
-				overflow:hidden;
+				padding: 0;
+				margin: 0;
+				overflow: hidden;
 
-				font-family:Monospace;
-				font-size:13px;
-				text-align:center;
+				font-family: Cheesebu;
+				font-size: 25px;
+				font-weight: bold;
+				text-align: center;
 			}
 
-			#info {
+			#info 
+			{
 				position: absolute;
 				top: 0px; width: 100%;
 				padding: 5px;
-				z-index:100;
+				z-index: 100;
 			}
 
-			a {
+			a {	color: #9784FE;	}
 
-				color: #0080ff;
-			}
-
-			b { color:orange }
+			b { color: orange }
+			
+			@font-face { font-family: Cheesebu; src: url('Fonts/CHEESEBU.TTF'); }
+			
 		</style>
 
 		<script src="js/three.min.js"></script>
@@ -79,26 +81,24 @@
 			<table style="width:100%">
 			  <tr>
 				<td style="width:33%" align="center">
-					<a href="http://www.wittyplanet.com/indexVR.html" target="_blank">
-						<marquee bgcolor="#000000" width="50%" scrolldelay="100" scrollamount="0" direction="left" loop="infinite" behavior="alternate" >
-			    			<h3>Try VR Beta web</h3>
-			    		</marquee>
+					<a href="http://www.wittyplanet.com/indexVR.html" target="_blank" style="text-decoration:none">
+						<h3>Try VR Beta web</h3>
 					</a>
 				</td>
-			    <td style="width:33%" align="center"> <audio id="audio_theme" src="Sounds/Basket_Case.mp3" preload="auto" ></audio> 
-			    	<a href="http://www.wittyplanet.com/portfolio/index.html" target="_blank">
-
-				    		<h3>Portfolio</h3>
-
+			    <td style="width:33%" align="center"> 
+					<audio id="audio_theme" src="Sounds/Basket_Case.mp3" preload="auto" ></audio>
+			    	<a href="http://www.wittyplanet.com/portfolio/index.html" target="_blank" style="text-decoration:none">
+						<h3>Portfolio</h3>
 			    	</a>
 			    </td>
 			    	
 			    <!-- <td style="width:33%"> <b>WASD</b> move, <b>R|F</b> up | down, <b>up|down</b> pitch, <b>left|right</b> yaw<br/> </td>  -->
 			    <td style="width:33%" align="center"> 
-			    	<a href="http://www.wittyplanet.com/WittyMoleWEB/index.html" target="_blank">
+			    	<a href="http://www.wittyplanet.com/WittyMoleWEB/index.html" target="_blank" style="text-decoration:none">
 			    		<marquee bgcolor="#000000" width="50%" scrolldelay="100" scrollamount="5" direction="left" loop="infinite" behavior="alternate" >
 			    			<h3>Try WittyMoleWEB Beta</h3>
 			    		</marquee>
+						
 			    	</a> 
 			    </td>
 			  </tr>
@@ -123,7 +123,7 @@
 			var container, stats;
 			var camera, controls, scene, renderer;
 			var geometry, meshPlanet, meshClouds, Earth_poly, meshPlanet2, meshClouds2, logo, logo2, meshQrcode, meshPlayStore, 
-				meshWittyMole, meshSoonStores, cubeBox, cubeSoonBox, cubeQRMole;
+				meshWittyMole, meshSoonStores, cubeBox, cubeSoonBox, cubeQRMole, cubeQRSums;
 				
 			var dirLight, dirLight2, dirLight3, dirLight4, dirLight5, pointLight, ambientLight;
 			var sounds = [];
@@ -369,7 +369,7 @@
 					ComingSoon.rotation.x =  90 * Math.PI / 180;
 					ComingSoon.scale.set(2000,2000,2000);
 				
-					//scene.add(ComingSoon);
+					//scene.add( ComingSoon );
 			    });
 
 
@@ -385,12 +385,12 @@
 				//meshQrcode.scale.set(5000,5000,5000);
 				meshPlayStore.rotation.x =  90 * Math.PI / 180;
 				
-				scene.add(meshPlayStore);	
-				
-			    
+				scene.add( meshPlayStore );	
+				    
 			    
 			    //Cubo con texturas por caras
-	  
+				//qrCode_Mole
+				
 				 var imagePrefix = "textures/cubeQR_Mole/";
 				 var directions  = ["qrcode", "qrcode", "qrcode", "qrcode", "Icono", "Icono"];
 				 var imageSuffix = ".png";
@@ -410,8 +410,28 @@
 				 scene.add( cubeQRMole );
 			    
 			    
-			    	
+			    //Cubo qrCode_Sums
+				 
+				 var imagePrefix = "textures/cubeQR_Sums/";
+				 var directions  = ["qrcode", "qrcode", "qrcode", "qrcode", "Icono", "Icono"];
+				 var imageSuffix = ".png";
+				   
+				 var materialArray = [];
+				 for (var i = 0; i < 6; i++)
+				  materialArray.push( new THREE.MeshBasicMaterial({
+				   map: THREE.ImageUtils.loadTexture( imagePrefix + directions[i] + imageSuffix ),
+				   side: THREE.FrontSide
+				  }));
+				  
+				 var cubeGeometry = new THREE.CubeGeometry( 5000, 5000, 5000 );
+				 var cubeMaterial = new THREE.MeshFaceMaterial( materialArray );
+				 cubeQRSums = new THREE.Mesh( cubeGeometry, cubeMaterial );
+				 cubeQRSums.position.set(-20000,-6800,0);
+				 
+				 scene.add( cubeQRSums );	
 				
+				
+				/*
 				//Cubo qrCode ???
 				 
 				 var imagePrefix = "textures/cubeUnreal/";
@@ -432,13 +452,13 @@
 				 cubeBox.position.set(-20000,-6800,0);
 				 
 				 scene.add( cubeBox );
-				
+				*/
 				
 				
 				//Cubo con texturas por caras
 	  
 				 var imagePrefix = "textures/cubeComingSoonStores/";
-				 var directions  = ["comingSoonA", "comingSoonB", "comingSoonB", "comingSoonB", "comingSoonB", "comingSoonA"];
+				 var directions  = ["googleplayicon", "comingSoonB", "comingSoonB", "comingSoonB", "comingSoonB", "googleplayicon"];
 				 var imageSuffix = ".png";
 				   
 				 var materialArray = [];
@@ -454,11 +474,8 @@
 				 cubeSoonBox.position.set(-20000,-2000,0);
 				 
 				 scene.add( cubeSoonBox );
-				
-				
-				
-				
-				
+					
+					
 				
 			    //Earth poly... Importado Blender
 			    
@@ -598,9 +615,11 @@
 				meshPlayStore.rotation.x += 5 * rotationSpeed * delta;
 				
 				//meshWittyMole.rotation.x += 5 * rotationSpeed * delta;
-				cubeBox.rotation.y -= rotationSpeed * delta;
+				//cubeBox.rotation.y -= rotationSpeed * delta;
 				
 				cubeQRMole.rotation.y += rotationSpeed * delta;
+				
+				cubeQRSums.rotation.y += rotationSpeed * delta;
 				
 				cubeSoonBox.rotation.x += 5 * rotationSpeed * delta;
 
